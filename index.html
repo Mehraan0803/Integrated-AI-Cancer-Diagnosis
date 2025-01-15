@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancer Detection Using Deep Learning</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: #fff;
+            line-height: 1.6;
+            min-height: 100vh; /* Allows content to grow */
+            background-color: #000; /* Fallback background */
+            overflow-x: hidden; /* Prevent horizontal scrolling */
+        }
+
+        /* Video Background */
+        #background-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures video covers entire screen */
+            z-index: -1; /* Send video to the background */
+        }
+
+        /* Header */
+        h1 {
+            text-align: center;
+            font-size: 40px;
+            margin-top: 30px;
+            color: #1f2a44;
+            font-weight: 700;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.7);
+        }
+
+        /* Main Container */
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 40px;
+            background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+            border-radius: 10px;
+            box-shadow: 0px 15px 35px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+            z-index: 1; /* Content stays above the video */
+        }
+
+        /* File Upload Form */
+        .upload-form {
+            margin-top: 30px;
+        }
+
+        .upload-form label {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 10px;
+            display: block;
+            font-weight: 600;
+        }
+
+        /* Custom File Input Styling */
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-upload .custom-file-button {
+            display: inline-block;
+            padding: 15px;
+            width: 100%;
+            text-align: center;
+            border: 2px solid #2d6b2d;
+            background: linear-gradient(to right, #3b8a3b, #2d6b2d);
+            color: #fff;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        .file-upload .custom-file-button:hover {
+            background: #2d6b2d;
+            transform: scale(1.03);
+        }
+
+        .upload-form button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            border: none;
+            background: linear-gradient(to right, #3b8a3b, #2d6b2d);
+            color: #fff;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        .upload-form button:hover {
+            background-color: #2d6b2d;
+            transform: scale(1.05);
+        }
+
+        /* Result Section */
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #fff;
+            color: #333;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .result img {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .prediction-result {
+            font-size: 24px;
+            font-weight: 500;
+            margin-top: 20px;
+        }
+
+        .prediction-cancer {
+            color: red;
+            font-weight: bold;
+        }
+
+        .prediction-no-cancer {
+            color: green;
+            font-weight: bold;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 32px;
+            }
+
+            .container {
+                width: 95%;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Video -->
+    <video id="background-video" autoplay muted loop>
+        <source src="https://videocdn.cdnpk.net/videos/16d4861d-ad51-5846-a17a-53cb9c6cb1cf/horizontal/previews/clear/large.mp4?token=exp=1735640718~hmac=740d46c947727c0edea8891580c891ed446228472c26baad32bcb2c8c28bc27b" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1>Cancer Detection Using Deep Learning</h1>
+
+        <!-- File Upload Form -->
+        <div class="upload-form">
+            <form action="/predict" method="post" enctype="multipart/form-data">
+                <label for="file">Upload a medical image (MRI):</label>
+                <div class="file-upload">
+                    <span class="custom-file-button">Choose File</span>
+                    <input type="file" name="file" id="file" accept="image/*" required>
+                </div>
+                <button type="submit">Predict</button>
+            </form>
+        </div>
+
+        <!-- Result Section -->
+        {% if prediction %}
+        <div class="result">
+            <h2 class="prediction-result {% if prediction in ['Glioma Tumor', 'Meningioma Tumor', 'Pituitary Tumor', 'Lung Cancer', 'Breast Cancer'] %}prediction-cancer{% else %}prediction-no-cancer{% endif %}">
+                Prediction: {{ prediction }}
+            </h2>
+            <p>Your uploaded image was successfully processed, and the prediction result is shown above.</p>
+            <img src="{{ img_path }}" alt="Uploaded Image">
+        </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
